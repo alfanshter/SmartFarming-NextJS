@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "app/(protected-pages)/dashboard/page.d"  ],
   "exclude": ["node_modules"]
 }
