@@ -292,7 +292,7 @@ export default function DashboardLayout({
                   {section.children.map((item) => (
                     <li key={item.name}>
                       <Link href={item.href}>
-                        <div className="flex items-center gap-2 px-2 py-1">
+                        <div className="flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-gray-100">
                           <span className="flex items-center text-black">
                             {item.icon}
                           </span>
@@ -356,7 +356,7 @@ export default function DashboardLayout({
           </div>
         </header>
         {/* main content */}
-        <main className="p-6">{children}</main>
+        <main>{children}</main>
       </div>
     </div>
   );
