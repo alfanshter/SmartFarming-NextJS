@@ -75,7 +75,7 @@ export default function DashboardLayout({
               />
             </svg>
           ),
-          href: "/sensors",
+          href: "/penyiramanmanual",
         },
         {
           name: "Otomatis Drip",
