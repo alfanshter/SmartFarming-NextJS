@@ -5,8 +5,6 @@ import { useState } from "react";
 import ZonaDrip from "./_components/ZonaDrip";
 import ActionButton from "./_components/ActionButton";
 export default function PenyiramanManualPage() {
-  const [activeZonaId, setActiveZonaId] = useState<number | null>(null);
-
   const zonaList = [
     { id: 1, name: "Zona A" },
     { id: 2, name: "Zona B" },
@@ -14,23 +12,38 @@ export default function PenyiramanManualPage() {
   ];
 
   const [activeZones, setActiveZones] = useState<number[]>([]);
-  // AKTIFKAN SEMUA
+  
+  // State untuk menyimpan sisa detik per zona
+  const [zonaSisaDetik, setZonaSisaDetik] = useState<Record<number, number | null>>({});
+
+  // AKTIFKAN SEMUA (semua zona bisa diaktifkan, dengan atau tanpa timer)
   const aktifkanSemua = () => {
-    setActiveZones(zonaList.map((z) => z.id));
+    const semuaZonaId = zonaList.map((z)=> z.id)
+    setActiveZones(semuaZonaId);
   };
 
   const stopSemua = () => {
     setActiveZones([]);
   };
 
-    // 🔘 TOGGLE PER ZONA
+  // TOGGLE PER ZONA (tanpa set timer terlebih dahulu)
   const toggleZona = (id: number) => {
     setActiveZones(prev =>
       prev.includes(id)
-        ? prev.filter(z => z !== id)
+        ? prev.filter(x => x !== id)
         : [...prev, id]
     );
   };
+
+  // Update sisaDetik dari child component
+  const updateZonaSisaDetik = (id: number, sisaDetik: number | null) => {
+    setZonaSisaDetik(prev => ({
+      ...prev,
+      [id]: sisaDetik
+    }));
+  };
+
+
 
   return (
     <div className="min-h-screen bg-green-50 p-10 y-6">
@@ -97,9 +110,9 @@ export default function PenyiramanManualPage() {
           key={zona.id}
           zona={zona}
           active={activeZones.includes(zona.id)}
-          onToggle={() =>
-            toggleZona(zona.id)
-          }
+          onToggle={() => toggleZona(zona.id)}
+          sisaDetik={zonaSisaDetik[zona.id] ?? null}
+          onSisaDetikChange={(sisaDetik) => updateZonaSisaDetik(zona.id, sisaDetik)}
         />
       ))}
     </div>

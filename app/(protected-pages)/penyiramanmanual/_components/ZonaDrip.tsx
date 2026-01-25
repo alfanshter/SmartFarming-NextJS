@@ -1,55 +1,110 @@
 import { Switch } from "@/shared/components/ui/Switch";
 import TimeInput from "./TimeInput";
-import { act, useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+
+interface ZonaDripProps {
+  zona: { id: number; name: string };
+  active: boolean;
+  onToggle: () => void;
+  sisaDetik: number | null;
+  onSisaDetikChange: (sisaDetik: number | null) => void;
+}
+
 export default function ZonaDrip({
   zona,
   active,
   onToggle,
-}: {
-  zona: { id: number; name: string };
-  active: boolean;
-  onToggle: () => void;
-}) {
+  sisaDetik,
+  onSisaDetikChange,
+}: ZonaDripProps) {
   const [menit, setMenit] = useState("");
   const [detik, setDetik] = useState("");
-  const [sisaDetik, setSisaDetik] = useState<number | null>(null);
-  const totalDetik = (Number(menit) || 0) * 60 + (Number(detik) || 0);
+  const [timerTarget, setTimerTarget] = useState<number | null>(null);
+  const prevActiveRef = useRef(active);
 
-  const isTimeEmpty = (Number(menit) || 0) === 0 && (Number(detik) || 0) === 0;
+  const totalDetik = (Number(menit) || 0) * 60 + (Number(detik) || 0);
+  const isTimeEmpty = totalDetik === 0;
 
   const handleToggle = () => {
     if (active) {
-      // MATI
-      setSisaDetik(null);
+      // MATI - reset state
+      onSisaDetikChange(null);
+      setTimerTarget(null);
       onToggle();
     } else {
       // NYALA
-      if (totalDetik <= 0) return;
-      setSisaDetik(totalDetik);
+      if (totalDetik > 0) {
+        // Mode countdown: set timer
+        setTimerTarget(totalDetik);
+        onSisaDetikChange(totalDetik);
+      } else {
+        // Mode count-up: mulai dari 0
+        onSisaDetikChange(0);
+      }
       onToggle();
     }
   };
 
+  // Sinkronisasi saat active berubah dari parent (contoh: Aktifkan Semua)
   useEffect(() => {
- 
-    const interval = setInterval(() => {
-      setSisaDetik((prev) => {
-        if (!prev || prev <= 1) {
-          clearInterval(interval);
-          onToggle(); // auto stop
-          return 0;
+    // Cek apakah active berubah dari false ke true
+    if (active && !prevActiveRef.current && sisaDetik === null) {
+      // Zona diaktifkan dari parent, tapi belum ada sisaDetik
+      // Gunakan queueMicrotask untuk menghindari setState dalam render
+      queueMicrotask(() => {
+        if (totalDetik > 0) {
+          // Mode countdown
+          setTimerTarget(totalDetik);
+          onSisaDetikChange(totalDetik);
+        } else {
+          // Mode count-up
+          onSisaDetikChange(0);
         }
-        return prev - 1;
       });
+    }
+    // Cek apakah active berubah dari true ke false
+    else if (!active && prevActiveRef.current) {
+      // Zona dimatikan dari parent
+      queueMicrotask(() => {
+        onSisaDetikChange(null);
+        setTimerTarget(null);
+      });
+    }
+    
+    // Update ref
+    prevActiveRef.current = active;
+  }, [active, sisaDetik, totalDetik, onSisaDetikChange]);
+
+  // Timer logic
+  useEffect(() => {
+    if (!active || sisaDetik === null) return;
+
+    const interval = setInterval(() => {
+      if (timerTarget !== null) {
+        // Mode COUNTDOWN (jika ada timer target)
+        if (sisaDetik > 0) {
+          onSisaDetikChange(sisaDetik - 1);
+        }
+      } else {
+        // Mode COUNT UP (jika tidak ada timer target)
+        onSisaDetikChange(sisaDetik + 1);
+      }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [active]);
+  }, [active, sisaDetik, timerTarget, onSisaDetikChange]);
+
+  // Auto-stop saat countdown selesai
+  useEffect(() => {
+    if (timerTarget !== null && sisaDetik === 0 && active) {
+      onToggle();
+    }
+  }, [sisaDetik, timerTarget, active, onToggle]);
 
   const menitSisa = Math.floor((sisaDetik ?? 0) / 60);
   const detikSisa = (sisaDetik ?? 0) % 60;
-
   const format = (n: number) => n.toString().padStart(2, "0");
+
 
   return (
     <div
@@ -86,7 +141,11 @@ export default function ZonaDrip({
           </div>
         </div>
         {/* switch */}
-        <Switch checked={active} onChange={handleToggle} disabled={isTimeEmpty} />
+        <Switch
+          checked={active}
+          onChange={handleToggle}
+          disabled={false}
+        />
       </div>
 
       {/* intensitas */}
@@ -112,13 +171,14 @@ export default function ZonaDrip({
       <div className="flex justify-between px-4 py-4 mt-4 bg-gray-200 border border-gray-300 rounded-xl ">
         <p className="text-gray-700 text-md font-mono">Total Durasi :</p>
         <p className="text-black text-lg font-semibold">
-          {`${menit} menit ${detik} detik`}{" "}
+          {menit || detik ? `${menit || "0"} menit ${detik || "0"} detik` : "Belum diatur"}
         </p>
       </div>
       {!active ? (
         <p className="text-sm text-gray-500 mt-4 mb-2">
-          💡 Atur durasi terlebih dahulu, kemudian aktifkan zona untuk memulai
-          penyiraman
+          💡 {isTimeEmpty 
+            ? "Aktifkan zona untuk memulai penyiraman dengan durasi bebas (count up)" 
+            : "Aktifkan zona untuk memulai countdown timer"}
         </p>
       ) : (
         <div className="flex flex-start items-center  w-full rounded-xl bg-blue-100 px-4 py-3 mt-10 text-blue-600 text-sm font-mono">
@@ -137,7 +197,8 @@ export default function ZonaDrip({
             />
           </svg>
           <span className="ml-2">
-            {active && sisaDetik !== null
+            {timerTarget !== null ? "⏱️ Countdown: " : "⏰ Durasi: "}
+            {sisaDetik !== null
               ? `${format(menitSisa)} menit ${format(detikSisa)} detik`
               : "-"}
           </span>
