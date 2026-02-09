@@ -27,6 +27,7 @@ export default function ZonaDrip({
   
   // Track nilai sebelumnya untuk deteksi countdown turun dari >0 ke 0
   const prevRemainingRef = useRef<number | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Sync with backend data
   useEffect(() => {
@@ -45,27 +46,32 @@ export default function ZonaDrip({
 
   // Timer logic - countdown otomatis 1 detik sekali
   useEffect(() => {
-    if (!active || localRemaining === null) return;
+    // Clear interval lama jika ada
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
 
-    const interval = setInterval(() => {
+    // Hanya buat interval jika active dan ada remaining time
+    if (!active) return;
+
+    intervalRef.current = setInterval(() => {
       setLocalRemaining((prev) => {
         if (prev === null || prev <= 0) return prev;
         return prev - 1;
       });
     }, 1000);
 
-    return () => clearInterval(interval);
-  }, [active, localRemaining]);
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [active]);
 
   // Auto-off saat countdown habis (0 detik)
   useEffect(() => {
-    console.log(`[${zona.name}] Auto-off check:`, {
-      active,
-      prevRemaining: prevRemainingRef.current,
-      localRemaining,
-      shouldAutoOff: active && prevRemainingRef.current !== null && prevRemainingRef.current > 0 && localRemaining === 0
-    });
-    
     // PENTING: Auto-off HANYA jika countdown turun dari >0 ke 0
     // prevRemainingRef.current > 0 = countdown sedang jalan
     // localRemaining === 0 = countdown sudah habis

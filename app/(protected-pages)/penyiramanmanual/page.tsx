@@ -82,6 +82,25 @@ export default function PenyiramanManualPage() {
 
   return (
     <div className="min-h-screen bg-green-50 p-10 y-6">
+      {/* Error Alert (jika ada error saat toggle) */}
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-300 rounded-lg p-4 flex items-start gap-3">
+          <svg className="w-6 h-6 text-red-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div className="flex-1">
+            <h4 className="text-red-800 font-semibold mb-1">Terjadi Kesalahan</h4>
+            <p className="text-red-700 text-sm">{error}</p>
+          </div>
+          <button 
+            onClick={() => window.location.reload()}
+            className="text-red-600 hover:text-red-800 font-medium text-sm"
+          >
+            Reload
+          </button>
+        </div>
+      )}
+      
       {/* tombol penyiraman manual */}
       <div className="flex justify-start gap-4">\
         <ActionButton

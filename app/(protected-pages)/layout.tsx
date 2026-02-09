@@ -149,7 +149,7 @@ export default function DashboardLayout({
               />
             </svg>
           ),
-          href: "/irrigation",
+          href: "/otomatisdrip",
         },
         {
           name: "Sirap",

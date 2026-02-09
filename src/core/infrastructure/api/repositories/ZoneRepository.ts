@@ -66,7 +66,7 @@ export class ZoneRepository implements IZoneRepository {
 
   async controlZone(id: string, data: ControlZoneDTO): Promise<ZoneControlResponse> {
     try {
-      console.log(`🎮 ${data.isActive ? 'Starting' : 'Stopping'} zone:`, id, data);
+      console.log(`🎮 ${data.isActive ? 'Starting' : 'Stopping'} zone:`, data.zoneId);
       const response = await apiClient.post<ZoneControlResponse>("/zones/control", data);
       console.log("✅ Zone control success:", response.data);
       return response.data;

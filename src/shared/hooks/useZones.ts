@@ -48,7 +48,12 @@ export function useZones(): UseZonesReturn {
       
       const data = await getAllZonesUseCase.execute();
       console.log("✅ Zones fetched successfully:", data);
-      setZones(data);
+      
+      // Sort zones by name untuk konsistensi urutan UI
+      const sortedZones = data.sort((a, b) => a.name.localeCompare(b.name));
+      console.log("📊 Zones sorted by name:", sortedZones.map(z => z.name));
+      
+      setZones(sortedZones);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to fetch zones";
       setError(errorMessage);
@@ -69,12 +74,16 @@ export function useZones(): UseZonesReturn {
         throw new Error("Use cases not initialized");
       }
       
+      console.log("🚀 Starting zone:", { id, durationMinutes, durationSeconds });
+      
       const controlData: ControlZoneDTO = {
         zoneId: id,
         isActive: true,
         durationMinutes,
         durationSeconds,
       };
+      
+      console.log("📦 Control data being sent:", controlData);
       
       const controlResponse = await controlZoneUseCase.execute(id, controlData);
       console.log("✅ Zone started:", controlResponse);
@@ -83,7 +92,28 @@ export function useZones(): UseZonesReturn {
       await fetchZones();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to start zone";
-      setError(errorMessage);
+      
+      // Handle specific backend errors
+      if (err && typeof err === 'object' && 'response' in err) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const axiosError = err as any;
+        if (axiosError.response?.data?.message) {
+          const backendMessage = axiosError.response.data.message;
+          console.error("❌ Backend error:", backendMessage);
+          
+          // Check for device not found error
+          if (backendMessage.includes('Device') && backendMessage.includes('not found')) {
+            setError(`⚠️ Device untuk zona ini tidak ditemukan. Hubungi admin untuk memperbaiki konfigurasi zona.`);
+          } else {
+            setError(`Backend error: ${backendMessage}`);
+          }
+        } else {
+          setError(errorMessage);
+        }
+      } else {
+        setError(errorMessage);
+      }
+      
       console.warn("⚠️ Error starting zone:", err);
       throw err;
     } finally {
