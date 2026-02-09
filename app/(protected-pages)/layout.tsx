@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 
@@ -13,6 +13,7 @@ export default function DashboardLayout({
   const { isAuthenticated, isLoading, user, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -275,8 +276,18 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Overlay untuk mobile */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* sidebar */}
-      <aside className="fixed top-0 left-0 h-screen w-64 bg-white shadow-2xl z-40 flex flex-col">
+      <aside className={`fixed top-0 left-0 h-screen w-64 bg-white shadow-2xl z-40 flex flex-col transition-transform duration-300 ${
+        isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+      }`}>
         {/* section atas sidebar */}
         <div className="flex-1 overflow-y-auto">
           <div className="h-50 bg-gradient-to-br from-green-400 to-green-700 px-6 py-8">
@@ -345,7 +356,7 @@ export default function DashboardLayout({
                   {/* menu items */}
                   {section.children.map((item) => (
                     <li key={item.name}>
-                      <Link href={item.href}>
+                      <Link href={item.href} onClick={() => setIsSidebarOpen(false)}>
                         <div className="flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-gray-100">
                           <span className="flex items-center text-black">
                             {item.icon}
@@ -370,24 +381,46 @@ export default function DashboardLayout({
       <div className="lg:ml-64">
         {/* topbar */}
         <header className="h-30 bg-gradient-to-r from-green-400 to-green-800 top-0 z-30 shadow-md">
-          <div className="h-full flex items-center justify-between px-10 py-2">
+          <div className="h-full flex items-center justify-between px-4 lg:px-10 py-2">
+            {/* Hamburger Menu Button - Only visible on mobile */}
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="lg:hidden inline-flex items-center justify-center p-2 rounded-lg text-white hover:bg-white/20 transition-colors"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="w-6 h-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+                />
+              </svg>
+            </button>
+
             {/* greeting and name */}
             <div>
-              <p className="text-white font-medium text-lg mb-2">
+              <p className="text-white font-medium text-sm lg:text-lg mb-1 lg:mb-2">
                 Selamat Datang
               </p>
-              <p className="text-white font-semibold text-xl">{user?.fullName || "User"}</p>
-              <p className="text-white/80 text-sm">{user?.email}</p>
+              <p className="text-white font-semibold text-base lg:text-xl">{user?.fullName || "User"}</p>
+              <p className="text-white/80 text-xs lg:text-sm hidden sm:block">{user?.email}</p>
             </div>
 
             {/* Sistem online and notif */}
-            <div className="flex items-center justify-center gap-4">
-              <div className="bg-white/30 rounded-xl px-4 py-2 flex items-center">
+            <div className="flex items-center justify-center gap-2 lg:gap-4">
+              {/* Sistem online - Hidden on small mobile */}
+              <div className="hidden md:flex bg-white/30 rounded-xl px-3 lg:px-4 py-2 items-center">
                 <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                <p className="ml-2 text-white text-sm font-semibold">
+                <p className="ml-2 text-white text-xs lg:text-sm font-semibold">
                   Sistem Online
                 </p>
-                <p className="ml-5 text-white text-sm font-thin">20:99:12</p>
+                <p className="ml-3 lg:ml-5 text-white text-xs lg:text-sm font-thin">20:99:12</p>
               </div>
 
               {/* icon notif */}
@@ -398,7 +431,7 @@ export default function DashboardLayout({
                   viewBox="0 0 24 24"
                   strokeWidth={1.5}
                   stroke="currentColor"
-                  className="size-6"
+                  className="w-5 h-5 lg:w-6 lg:h-6"
                 >
                   <path
                     strokeLinecap="round"
@@ -420,7 +453,7 @@ export default function DashboardLayout({
                   viewBox="0 0 24 24"
                   strokeWidth={1.5}
                   stroke="currentColor"
-                  className="size-6 text-white"
+                  className="w-5 h-5 lg:w-6 lg:h-6 text-white"
                 >
                   <path
                     strokeLinecap="round"

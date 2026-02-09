@@ -178,20 +178,20 @@ export default function OtomatisDripPage() {
   }
 
   return (
-    <div className="min-h-screen bg-green-50 p-10">
+    <div className="min-h-screen bg-green-50 p-4 sm:p-6 lg:p-10">
       {/* Header + Button Tambah */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
             Penjadwalan Otomatis Drip
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">
             Atur jadwal penyiraman otomatis untuk setiap zona
           </p>
         </div>
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors shadow-md"
+          className="flex items-center gap-2 bg-green-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg hover:bg-green-700 transition-colors shadow-md text-sm sm:text-base whitespace-nowrap"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -213,7 +213,7 @@ export default function OtomatisDripPage() {
 
       {/* Active Schedules Count */}
       <div className="mb-4">
-        <h2 className="text-lg font-semibold text-gray-700">
+        <h2 className="text-base sm:text-lg font-semibold text-gray-700">
           Jadwal Aktif ({activeSchedules.length})
         </h2>
       </div>
