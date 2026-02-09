@@ -1,12 +1,46 @@
+"use client";
+
 import Link from "next/link";
-import { title } from "process";
-import React from "react";
+import React, { useEffect } from "react";
+import { useAuth } from "@/shared/contexts/AuthContext";
+import { useRouter, usePathname } from "next/navigation";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { isAuthenticated, isLoading, user, logout } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  // Show loading while checking auth
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <svg className="animate-spin h-12 w-12 text-green-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <p className="mt-4 text-gray-600">Memuat...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
+
   const menuItems = [
     {
       title: "Monitoring",
@@ -30,6 +64,26 @@ export default function DashboardLayout({
             </svg>
           ),
           href: "/dashboard",
+        },
+        {
+          name: "Device Management",
+          icon: (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="size-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 0 0 2.25-2.25V6.75a2.25 2.25 0 0 0-2.25-2.25H6.75A2.25 2.25 0 0 0 4.5 6.75v10.5a2.25 2.25 0 0 0 2.25 2.25Zm.75-12h9v9h-9v-9Z"
+              />
+            </svg>
+          ),
+          href: "/devices",
         },
         {
           name: "Sistem Keamanan",
@@ -322,12 +376,13 @@ export default function DashboardLayout({
               <p className="text-white font-medium text-lg mb-2">
                 Selamat Datang
               </p>
-              <p className="text-white font-semibold text-xl">Alfan</p>
+              <p className="text-white font-semibold text-xl">{user?.fullName || "User"}</p>
+              <p className="text-white/80 text-sm">{user?.email}</p>
             </div>
 
             {/* Sistem online and notif */}
-            <div className="flex items-center justify-center">
-              <div className="bg-white/30 rounded-xl px-4 py-2 mr-6 flex items-center">
+            <div className="flex items-center justify-center gap-4">
+              <div className="bg-white/30 rounded-xl px-4 py-2 flex items-center">
                 <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                 <p className="ml-2 text-white text-sm font-semibold">
                   Sistem Online
@@ -352,6 +407,28 @@ export default function DashboardLayout({
                   />
                 </svg>
               </div>
+
+              {/* Logout button */}
+              <button
+                onClick={logout}
+                className="inline-flex items-center justify-center rounded-full bg-red-500/80 hover:bg-red-600 shadow-lg p-2 transition-colors"
+                title="Logout"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="size-6 text-white"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
+                  />
+                </svg>
+              </button>
             </div>
           </div>
         </header>

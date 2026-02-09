@@ -1,54 +1,89 @@
 "use client";
 
 import React from "react";
-import { useState } from "react";
 import ZonaDrip from "./_components/ZonaDrip";
 import ActionButton from "./_components/ActionButton";
+import { useZones } from "@/shared/hooks/useZones";
+
 export default function PenyiramanManualPage() {
-  const zonaList = [
-    { id: 1, name: "Zona A" },
-    { id: 2, name: "Zona B" },
-    { id: 3, name: "Zona C" },
-  ];
+  const { zones, isLoading, error, startZone, stopZone, fetchZones } = useZones();
 
-  const [activeZones, setActiveZones] = useState<number[]>([]);
-  
-  // State untuk menyimpan sisa detik per zona
-  const [zonaSisaDetik, setZonaSisaDetik] = useState<Record<number, number | null>>({});
-
-  // AKTIFKAN SEMUA (semua zona bisa diaktifkan, dengan atau tanpa timer)
-  const aktifkanSemua = () => {
-    const semuaZonaId = zonaList.map((z)=> z.id)
-    setActiveZones(semuaZonaId);
+  // AKTIFKAN SEMUA (start semua zona dengan durasi masing-masing)
+  const aktifkanSemua = async () => {
+    try {
+      for (const zone of zones) {
+        if (!zone.isActive) {
+          await startZone(zone.id, zone.durationMinutes, zone.durationSeconds);
+        }
+      }
+      await fetchZones(); // Refresh data
+    } catch (err) {
+      console.error("Error activating all zones:", err);
+    }
   };
 
-  const stopSemua = () => {
-    setActiveZones([]);
+  const stopSemua = async () => {
+    try {
+      for (const zone of zones) {
+        if (zone.isActive) {
+          await stopZone(zone.id);
+        }
+      }
+      await fetchZones(); // Refresh data
+    } catch (err) {
+      console.error("Error stopping all zones:", err);
+    }
   };
 
-  // TOGGLE PER ZONA (tanpa set timer terlebih dahulu)
-  const toggleZona = (id: number) => {
-    setActiveZones(prev =>
-      prev.includes(id)
-        ? prev.filter(x => x !== id)
-        : [...prev, id]
+  // TOGGLE PER ZONA
+  const toggleZona = async (id: string, isActive: boolean, minutes: number, seconds: number) => {
+    try {
+      if (isActive) {
+        await stopZone(id);
+      } else {
+        await startZone(id, minutes, seconds);
+      }
+      await fetchZones(); // Refresh data
+    } catch (err) {
+      console.error("Error toggling zone:", err);
+    }
+  };
+
+  if (isLoading && zones.length === 0) {
+    return (
+      <div className="min-h-screen bg-green-50 flex items-center justify-center">
+        <div className="text-center">
+          <svg className="animate-spin h-12 w-12 text-green-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <p className="mt-4 text-gray-600">Memuat zona...</p>
+        </div>
+      </div>
     );
-  };
+  }
 
-  // Update sisaDetik dari child component
-  const updateZonaSisaDetik = (id: number, sisaDetik: number | null) => {
-    setZonaSisaDetik(prev => ({
-      ...prev,
-      [id]: sisaDetik
-    }));
-  };
-
-
+  if (error) {
+    return (
+      <div className="min-h-screen bg-green-50 p-10">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <h3 className="text-red-800 font-semibold mb-2">Error</h3>
+          <p className="text-red-600">{error}</p>
+          <button 
+            onClick={fetchZones}
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+          >
+            Coba Lagi
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-green-50 p-10 y-6">
       {/* tombol penyiraman manual */}
-      <div className="flex justify-start gap-4">
+      <div className="flex justify-start gap-4">\
         <ActionButton
           label="Aktifkan Semua"
           variant="primary"
@@ -105,14 +140,19 @@ export default function PenyiramanManualPage() {
       </div>
 
       {/* Zona Drip */}
-      {zonaList.map((zona) => (
+      {zones.map((zone) => (
         <ZonaDrip
-          key={zona.id}
-          zona={zona}
-          active={activeZones.includes(zona.id)}
-          onToggle={() => toggleZona(zona.id)}
-          sisaDetik={zonaSisaDetik[zona.id] ?? null}
-          onSisaDetikChange={(sisaDetik) => updateZonaSisaDetik(zona.id, sisaDetik)}
+          key={zone.id}
+          zona={{
+            id: zone.id,
+            name: zone.name,
+            description: zone.description,
+            durationMinutes: zone.durationMinutes,
+            durationSeconds: zone.durationSeconds,
+          }}
+          active={zone.isActive}
+          onToggle={(minutes, seconds) => toggleZona(zone.id, zone.isActive, minutes, seconds)}
+          remainingSeconds={zone.remainingSeconds}
         />
       ))}
     </div>
