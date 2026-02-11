@@ -153,7 +153,7 @@ export default function DashboardLayout({
           href: "/otomatisdrip",
         },
         {
-          name: "Sirap",
+          name: "Siram Polybag",
           icon: (
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -170,7 +170,7 @@ export default function DashboardLayout({
               />
             </svg>
           ),
-          href: "/irrigation",
+          href: "/sirampolybag",
         },
       ],
     },

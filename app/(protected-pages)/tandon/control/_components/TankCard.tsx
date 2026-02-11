@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Tank } from "@/core/domain/entities/Tank";
 
 interface TankCardProps {
@@ -29,26 +29,40 @@ export default function TankCard({
   
   const hasSensor = !!tank.sensorDeviceId;
 
+  // Auto stop ketika timer habis
+  const handleAutoStop = useCallback(() => {
+    setIsPumping(false);
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    // Call API to stop pump
+    if (onStopPump) {
+      onStopPump(tank.id);
+    }
+  }, [onStopPump, tank.id]);
+
   // Effect untuk countdown timer
   useEffect(() => {
     if (isPumping && remainingTime > 0) {
       timerRef.current = setInterval(() => {
         setRemainingTime((prev) => {
           if (prev <= 1) {
-            // Timer selesai
-            setIsPumping(false);
-            if (timerRef.current) clearInterval(timerRef.current);
+            // Timer selesai - akan ditrigger di effect berikutnya
             return 0;
           }
           return prev - 1;
         });
       }, 1000);
+    } else if (isPumping && remainingTime === 0) {
+      // Auto stop ketika countdown selesai
+      handleAutoStop();
     }
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isPumping, remainingTime]);
+  }, [isPumping, remainingTime, handleAutoStop]);
 
   // Format waktu untuk display (MM:SS)
   const formatTime = (seconds: number): string => {

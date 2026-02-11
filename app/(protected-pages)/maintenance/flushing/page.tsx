@@ -33,41 +33,38 @@ export default function FlushingSystemPage() {
     getStatistics();
   }, [getCurrentSession, getHistory, getStatistics]);
 
-  // Sync countdown dengan current session
+  // Countdown timer effect dengan real-time sync
   useEffect(() => {
-    if (currentSession && isRunning) {
-      const startTime = new Date(currentSession.startedAt);
-      const now = new Date();
-      const elapsedSeconds = Math.floor((now.getTime() - startTime.getTime()) / 1000);
-      const totalSeconds = currentSession.durationMinutes * 60;
-      const remaining = Math.max(0, totalSeconds - elapsedSeconds);
-      setRemainingTime(remaining);
-    } else {
-      setRemainingTime(0);
-    }
-  }, [currentSession, isRunning]);
+    if (isRunning && currentSession) {
+      // Fungsi untuk menghitung waktu tersisa berdasarkan server time
+      const calculateRemainingTime = () => {
+        const startTime = new Date(currentSession.startedAt);
+        const now = new Date();
+        const elapsedSeconds = Math.floor((now.getTime() - startTime.getTime()) / 1000);
+        const totalSeconds = currentSession.durationMinutes * 60;
+        const remaining = Math.max(0, totalSeconds - elapsedSeconds);
+        return remaining;
+      };
 
-  // Countdown timer effect
-  useEffect(() => {
-    if (isRunning && remainingTime > 0) {
+      // Update countdown setiap detik berdasarkan waktu nyata
       timerRef.current = setInterval(() => {
-        setRemainingTime((prev) => {
-          if (prev <= 1) {
-            // Timer selesai - refresh data
-            getCurrentSession();
-            getHistory({ limit: 50 });
-            getStatistics();
-            return 0;
-          }
-          return prev - 1;
-        });
+        const remaining = calculateRemainingTime();
+        setRemainingTime(remaining);
+        
+        // Polling untuk cek apakah backend sudah auto-stop
+        if (remaining === 0) {
+          // Refresh session untuk cek status terbaru dari backend
+          getCurrentSession();
+        }
       }, 1000);
+    } else if (!isRunning) {
+      setRemainingTime(0);
     }
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isRunning, remainingTime, getCurrentSession, getHistory, getStatistics]);
+  }, [isRunning, currentSession, getCurrentSession]);
 
   // Format waktu untuk display (MM:SS)
   const formatTime = (seconds: number): string => {
