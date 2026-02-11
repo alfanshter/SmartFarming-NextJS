@@ -33,7 +33,7 @@ export default function FlushingSystemPage() {
     getStatistics();
   }, [getCurrentSession, getHistory, getStatistics]);
 
-  // Countdown timer effect dengan real-time sync
+  // Countdown timer effect dengan real-time sync dan auto-stop
   useEffect(() => {
     if (isRunning && currentSession) {
       // Fungsi untuk menghitung waktu tersisa berdasarkan server time
@@ -51,10 +51,9 @@ export default function FlushingSystemPage() {
         const remaining = calculateRemainingTime();
         setRemainingTime(remaining);
         
-        // Polling untuk cek apakah backend sudah auto-stop
+        // Auto-stop ketika durasi habis
         if (remaining === 0) {
-          // Refresh session untuk cek status terbaru dari backend
-          getCurrentSession();
+          stopFlushing();
         }
       }, 1000);
     } else if (!isRunning) {
@@ -64,7 +63,7 @@ export default function FlushingSystemPage() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isRunning, currentSession, getCurrentSession]);
+  }, [isRunning, currentSession, stopFlushing]);
 
   // Format waktu untuk display (MM:SS)
   const formatTime = (seconds: number): string => {
