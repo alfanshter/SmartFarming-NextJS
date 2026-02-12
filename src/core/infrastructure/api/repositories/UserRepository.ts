@@ -1,5 +1,5 @@
-import { IUserRepository } from "@/src/core/domain/repositories/IUserRepository";
-import { User } from "@/src/core/domain/entities/User";
+import { IUserRepository } from "../../../domain/repositories/IUserRepository";
+import { User } from "../../../domain/entities/User";
 import { apiClient } from "../apiClient";
 
 export class UserRepository implements IUserRepository {

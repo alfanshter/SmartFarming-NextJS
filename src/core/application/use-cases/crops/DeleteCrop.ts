@@ -1,5 +1,5 @@
-import { ICropRepository } from "@/src/core/domain/repositories/ICropRepository";
-import { Crop } from "@/src/core/domain/entities/Crop";
+import { ICropRepository } from "../../../domain/repositories/ICropRepository";
+import { Crop } from "../../../domain/entities/Crop";
 
 export class DeleteCropUseCase {
     constructor(private cropRepository:  ICropRepository) {}
